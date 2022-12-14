@@ -2,7 +2,7 @@
 Custom workflow for processing captions in a Kaltura channel
 
 # Usage example:
-python3 processCaptions.py PID=<pid> ADMINSECRET=<secret> USERID=ron.raz@kaltura.com SERVICEURL=https://www.kaltura.com/ FROMCAT=159481552 TOCAT=282451502
+python3 processCaptions.py PID=## ADMINSECRET=### USERID=ron.raz@kaltura.com SERVICEURL=https://www.kaltura.com/ FROMCAT=159481552 TOCAT=282451502
 
 # Flow:
 Loop on entry IDs in category/channel FROMCAT:
