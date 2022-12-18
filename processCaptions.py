@@ -62,11 +62,14 @@ def processCaptions(kInst,entryId,captionsFileName):
     category_entry.entryId = entryId
     result = kInst['CLIENT'].categoryEntry.add(category_entry)
 
-def extractAudioFile(dataUrl,videoFileName,audioFileName):
-    print('getting video file',dataUrl,videoFileName)
-    urllib.request.urlretrieve(dataUrl, videoFileName)
-    print('extracting audio file',audioFileName)
-    subprocess.run(['ffmpeg','-i',videoFileName,'-vn','-acodec','copy',audioFileName])
+def extractAudioFile(downloadUrl,videoFileName,audioFileName):
+    try:
+        print('getting video file',downloadUrl,videoFileName)
+        urllib.request.urlretrieve(downloadUrl, videoFileName)
+        print('extracting audio file',audioFileName)
+        subprocess.run(['ffmpeg','-i',videoFileName,'-vn','-acodec','copy',audioFileName])
+    except:
+        print('Skipping extractAudioFile (',downloadUrl,',',videoFileName,',',audioFileName,')')
 
 def processFiles(kInst):
     ret= None;
@@ -79,8 +82,8 @@ def processFiles(kInst):
             # upload the captions, and move the entry to an output channel
             processCaptions(kInst,entry.id,captionsFileName)
         else:
-            if not exists(audioFileName) and entry.dataUrl:
-                extractAudioFile(entry.dataUrl,videoFileName,audioFileName)
+            if not exists(audioFileName) and entry.downloadUrl:
+                extractAudioFile(entry.downloadUrl,videoFileName,audioFileName)
             else:
                 print('skipping',entry.id)
             # break
