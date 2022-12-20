@@ -25,6 +25,14 @@ def kStart(conf):
     ret['FILTER'].categoriesIdsMatchAnd = conf['FROMCAT']
     ret['FROMCAT']= conf['FROMCAT']
     ret['TOCAT']= conf['TOCAT']
+    # confirm that flavor param ID is valid
+    try:
+        ret['FLAVORPARAMID'] = int(conf['FLAVORPARAMID'])
+        result = ret['CLIENT'].flavorParams.get(ret['FLAVORPARAMID'])
+        print('Downloading FlavorParamID=',result.id,', Name=',result.name)
+    except:
+        print('Problem with the flavor param ID',conf['FLAVORPARAMID'],'using ffmpeg instead')
+        ret['FLAVORPARAMID']= None
     return ret
 
 def processCaptions(kInst,entryId,captionsFileName):
@@ -71,6 +79,18 @@ def extractAudioFile(downloadUrl,videoFileName,audioFileName):
     except:
         print('Skipping extractAudioFile (',downloadUrl,',',videoFileName,',',audioFileName,')')
 
+def downloadAudioFile(kInst,entryId,audioFileName):
+    try:
+        filter = KalturaFlavorAssetFilter()
+        filter.flavorParamsIdEqual = kInst['FLAVORPARAMID']
+        filter.entryIdEqual = entryId
+        downloadId = kInst['CLIENT'].flavorAsset.list(filter, KalturaFilterPager()).getObjects()[0].id
+        downloadUrl = kInst['CLIENT'].flavorAsset.getUrl(downloadId, 0, False, KalturaFlavorAssetUrlOptions())
+        urllib.request.urlretrieve(downloadUrl, audioFileName)
+        print('Downloaded',audioFileName)
+    except:
+        print('skipping downloadAudioFile (',entryId,')')
+
 def processFiles(kInst):
     ret= None;
     res = kInst['CLIENT'].media.list(kInst['FILTER'], KalturaFilterPager())
@@ -82,8 +102,11 @@ def processFiles(kInst):
             # upload the captions, and move the entry to an output channel
             processCaptions(kInst,entry.id,captionsFileName)
         else:
-            if not exists(audioFileName) and entry.downloadUrl:
-                extractAudioFile(entry.downloadUrl,videoFileName,audioFileName)
+            if not exists(audioFileName):
+                if kInst['FLAVORPARAMID']:
+                    downloadAudioFile(kInst,entry.id,audioFileName)
+                else:
+                    extractAudioFile(entry.downloadUrl,videoFileName,audioFileName)
             else:
                 print('skipping',entry.id)
             # break
